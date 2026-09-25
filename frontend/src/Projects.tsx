@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Users, Plus, Check } from 'lucide-react';
+import { Briefcase, Users, Plus, Check, Edit2, X, Save } from 'lucide-react';
 
-function ProjectItem({ project, user, allUsers }: { project: any, user: any, allUsers: any[] }) {
+function ProjectItem({ project, user, allUsers, refreshProjects }: { project: any, user: any, allUsers: any[], refreshProjects: () => void }) {
   const [projectUsers, setProjectUsers] = useState<any[]>([]);
   const [showUsers, setShowUsers] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(project.name);
+  const [editStatus, setEditStatus] = useState(project.status || 'ACTIVE');
 
   useEffect(() => {
     if (user.role === 'ORG_ADMIN' && showUsers) {
@@ -17,30 +20,70 @@ function ProjectItem({ project, user, allUsers }: { project: any, user: any, all
     fetch(`/api/projects/${project.id}/users`).then(r => r.json()).then(setProjectUsers);
   };
 
+  const handleUpdate = async () => {
+    if (!editName) return;
+    await fetch(`/api/projects/${project.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editName, status: editStatus })
+    });
+    setIsEditing(false);
+    refreshProjects();
+  };
+
   return (
     <li className="bg-white shadow-sm border border-slate-200/60 rounded-3xl p-8 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div className="bg-teal-50 p-3 rounded-2xl border border-teal-100">
+        <div className="flex items-center gap-4 w-full">
+          <div className="bg-teal-50 p-3 rounded-2xl border border-teal-100 flex-shrink-0">
             <Briefcase className="w-6 h-6 text-teal-600" />
           </div>
-          <div>
-            <h3 className="text-xl font-medium text-slate-900">{project.name}</h3>
-            <div className="mt-1 flex items-center gap-2">
-              <span className={`inline-flex rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${project.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-500/20'}`}>
-                {project.status || 'ACTIVE'}
-              </span>
+          {isEditing ? (
+            <div className="flex-1 flex gap-2 items-center">
+              <input 
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="border-0 ring-1 ring-inset ring-slate-300 rounded-lg px-3 py-1.5 text-sm text-slate-900 shadow-sm focus:ring-2 focus:ring-teal-600 outline-none bg-white"
+              />
+              <select 
+                value={editStatus}
+                onChange={e => setEditStatus(e.target.value)}
+                className="border-0 ring-1 ring-inset ring-slate-300 rounded-lg px-3 py-1.5 text-sm text-slate-900 shadow-sm focus:ring-2 focus:ring-teal-600 outline-none bg-white"
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+              <button onClick={handleUpdate} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Save className="w-4 h-4" /></button>
+              <button onClick={() => { setIsEditing(false); setEditName(project.name); setEditStatus(project.status || 'ACTIVE'); }} className="p-1.5 text-slate-400 hover:bg-slate-50 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1">
+              <h3 className="text-xl font-medium text-slate-900 flex items-center gap-2">
+                {project.name}
+                {user.role === 'ORG_ADMIN' && (
+                  <button onClick={() => setIsEditing(true)} className="text-slate-400 hover:text-teal-600 transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                )}
+              </h3>
+              <div className="mt-1 flex items-center gap-2">
+                <span className={`inline-flex rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${project.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-500/20'}`}>
+                  {project.status || 'ACTIVE'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-        {user.role === 'ORG_ADMIN' && (
-          <button 
-            onClick={() => setShowUsers(!showUsers)}
-            className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-colors ${showUsers ? 'bg-slate-100 text-slate-700' : 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200/50'}`}
-          >
-            <Users className="w-4 h-4" />
-            {showUsers ? 'Hide Team' : 'Manage Team'}
-          </button>
+        {user.role === 'ORG_ADMIN' && !isEditing && (
+          <div className="flex-shrink-0 ml-4">
+            <button 
+              onClick={() => setShowUsers(!showUsers)}
+              className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-colors ${showUsers ? 'bg-slate-100 text-slate-700' : 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200/50'}`}
+            >
+              <Users className="w-4 h-4" />
+              {showUsers ? 'Hide Team' : 'Manage Team'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -75,8 +118,10 @@ export default function Projects({ user }: { user: any }) {
   const [name, setName] = useState('');
   const [allUsers, setAllUsers] = useState<any[]>([]);
 
+  const fetchProjects = () => fetch('/api/projects/').then(r => r.json()).then(setProjects).catch(console.error);
+
   useEffect(() => {
-    fetch('/api/projects/').then(r => r.json()).then(setProjects).catch(console.error);
+    fetchProjects();
     if (user.role === 'ORG_ADMIN') {
       fetch('/api/users/').then(r => r.json()).then(setAllUsers).catch(console.error);
     }
@@ -139,7 +184,7 @@ export default function Projects({ user }: { user: any }) {
           </div>
         )}
         {projects.map((p: any) => (
-          <ProjectItem key={p.id} project={p} user={user} allUsers={allUsers} />
+          <ProjectItem key={p.id} project={p} user={user} allUsers={allUsers} refreshProjects={fetchProjects} />
         ))}
       </ul>
     </div>

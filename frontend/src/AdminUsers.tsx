@@ -44,6 +44,20 @@ export default function AdminUsers({ currentUser }: { currentUser?: any }) {
     }
   };
 
+  const handleDeleteUser = async (userId: string, username: string) => {
+    if (!window.confirm(`Are you sure you want to permanently remove user ${username}?`)) return;
+    try {
+      const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchUsers();
+      } else {
+        alert("Failed to delete user.");
+      }
+    } catch (err) {
+      alert("Network error.");
+    }
+  };
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     await fetch('/api/users/', {
@@ -94,12 +108,20 @@ export default function AdminUsers({ currentUser }: { currentUser?: any }) {
                   Reset PIN
                 </button>
                 {currentUser?.id !== u.id && (
-                  <button 
-                    onClick={() => handleRoleChange(u.id, u.role)}
-                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-teal-600 transition-colors"
-                  >
-                    {u.role === 'ORG_ADMIN' ? 'Revoke Admin' : 'Make Admin'}
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => handleRoleChange(u.id, u.role)}
+                      className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-teal-600 transition-colors"
+                    >
+                      {u.role === 'ORG_ADMIN' ? 'Revoke Admin' : 'Make Admin'}
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteUser(u.id, u.username)}
+                      className="px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </>
                 )}
               </div>
             </li>
