@@ -60,7 +60,7 @@ function Layout({ user }: { user: any }) {
                 <Route path="/problems" element={<Problems user={user} />} />
                 <Route path="/problems/new" element={<ProblemForm user={user} />} />
                 <Route path="/problems/:id" element={<ProblemDetail user={user} />} />
-                {user.role === 'ORG_ADMIN' && <Route path="/admin/users" element={<AdminUsers />} />}
+                {user.role === 'ORG_ADMIN' && <Route path="/admin/users" element={<AdminUsers currentUser={user} />} />}
               </Routes>
             </ErrorBoundary>
           </div>

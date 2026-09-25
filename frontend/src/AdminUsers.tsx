@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function AdminUsers() {
+export default function AdminUsers({ currentUser }: { currentUser?: any }) {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newUsername, setNewUsername] = useState('');
@@ -93,12 +93,14 @@ export default function AdminUsers() {
                 >
                   Reset PIN
                 </button>
-                <button 
-                  onClick={() => handleRoleChange(u.id, u.role)}
-                  className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-teal-600 transition-colors"
-                >
-                  {u.role === 'ORG_ADMIN' ? 'Revoke Admin' : 'Make Admin'}
-                </button>
+                {currentUser?.id !== u.id && (
+                  <button 
+                    onClick={() => handleRoleChange(u.id, u.role)}
+                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-teal-600 transition-colors"
+                  >
+                    {u.role === 'ORG_ADMIN' ? 'Revoke Admin' : 'Make Admin'}
+                  </button>
+                )}
               </div>
             </li>
           ))}
