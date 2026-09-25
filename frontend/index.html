@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpsVault</title>
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        document.body.innerHTML = '<div style="color: red; padding: 20px; font-family: monospace;"><h1>GLOBAL CRASH</h1><p>' + message + '</p><p>' + source + ':' + lineno + ':' + colno + '</p><pre>' + (error ? error.stack : '') + '</pre></div>';
+        return true;
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        document.body.innerHTML = '<div style="color: red; padding: 20px; font-family: monospace;"><h1>UNHANDLED PROMISE REJECTION</h1><p>' + event.reason + '</p></div>';
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

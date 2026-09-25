@@ -1,0 +1,21 @@
+    op.execute("""
+    CREATE OR REPLACE FUNCTION update_search_vector() RETURNS trigger AS $$
+    BEGIN
+      NEW.search_vector :=
+        setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+        setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(NEW.symptoms, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(NEW.investigation, '')), 'D') ||
+        setweight(to_tsvector('english', COALESCE(NEW.root_cause, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE(NEW.prevention, '')), 'C') ||
+        setweight(to_tsvector('english', COALESCE(NEW.technology, '')), 'B') ||
+        setweight(to_tsvector('english', COALESCE(NEW.category, '')), 'D');
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
+    ON problems FOR EACH ROW EXECUTE PROCEDURE update_search_vector();
+    
+    CREATE INDEX idx_problems_search_vector ON problems USING GIN(search_vector);
+    """)
